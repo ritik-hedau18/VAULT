@@ -1,0 +1,66 @@
+server:
+  port: 8080
+  ssl:
+    key-store: classpath:keystore.p12
+    key-store-password: vaultpassword
+    key-store-type: PKCS12
+    key-alias: vault
+    enabled: true
+
+spring:
+  application:
+    name: vault-backend
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/vaultdb}
+    username: ${DB_USER:vaultuser}
+    password: ${DB_PASSWORD:vaultpassword}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/vault_audit}
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:vault.notification.service@gmail.com}
+    password: ${MAIL_PASSWORD:mockpassword}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  quartz:
+    job-store-type: memory
+    properties:
+      org:
+        quartz:
+          threadPool:
+            threadCount: 5
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+    access-token-expiration-ms: 900000 # 15 minutes
+    refresh-token-expiration-ms: 604800000 # 7 days
+  aes:
+    secret-key: ${AES_SECRET_KEY:SuperSecretVaultKeyEncryptAtRest12}
+  twilio:
+    account-sid: ${TWILIO_ACCOUNT_SID:AC00000000000000000000000000000000}
+    auth-token: ${TWILIO_AUTH_TOKEN:mock_auth_token_value}
+    phone-number: ${TWILIO_PHONE_NUMBER:+15017122661}
