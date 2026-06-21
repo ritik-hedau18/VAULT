@@ -106,9 +106,15 @@ public class AdminController {
         long totalUsers = userRepository.count();
         long totalAccounts = accountRepository.count();
         BigDecimal totalBalance = accountRepository.sumAllBalances();
+        if (totalBalance == null) {
+            totalBalance = BigDecimal.ZERO;
+        }
 
         LocalDateTime startOfToday = LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT);
         BigDecimal todayVolume = transactionRepository.sumAllTransactionVolumeToday(startOfToday);
+        if (todayVolume == null) {
+            todayVolume = BigDecimal.ZERO;
+        }
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalUsers", totalUsers);

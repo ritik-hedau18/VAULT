@@ -28,9 +28,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
     @Query("SELECT t FROM Transaction t WHERE t.fromAccount = :account OR t.toAccount = :account")
     Page<Transaction> findTransactionHistory(@Param("account") Account account, Pageable pageable);
 
-    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.fromAccount = :account AND t.type = com.vault.transaction.entity.TransactionType.TRANSFER AND t.status = com.vault.transaction.entity.TransactionStatus.SUCCESS AND t.initiatedAt >= :startOfToday")
+    @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.fromAccount = :account AND t.type = com.vault.transaction.entity.TransactionType.TRANSFER AND t.status = com.vault.transaction.entity.TransactionStatus.SUCCESS AND t.initiatedAt >= :startOfToday")
     BigDecimal sumSuccessfulTransfersToday(@Param("account") Account account, @Param("startOfToday") LocalDateTime startOfToday);
 
-    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.status = com.vault.transaction.entity.TransactionStatus.SUCCESS AND t.initiatedAt >= :startOfToday")
+    @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.status = com.vault.transaction.entity.TransactionStatus.SUCCESS AND t.initiatedAt >= :startOfToday")
     BigDecimal sumAllTransactionVolumeToday(@Param("startOfToday") LocalDateTime startOfToday);
 }

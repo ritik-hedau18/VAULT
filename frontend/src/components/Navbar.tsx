@@ -67,54 +67,56 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onUpdateUser }) 
   };
 
   return (
-    <nav className="glass-panel border border-white/5 rounded-2xl px-6 py-4 flex justify-between items-center bg-slate-900/60 relative z-40">
-      
-      {/* Brand Logo */}
-      <div className="flex items-center gap-2.5">
-        <div className="p-2 rounded-xl bg-blue-600/10 border border-blue-500/25">
-          <LandmarkIcon className="w-6 h-6 text-blue-400" />
-        </div>
-        <div>
-          <span className="text-lg font-black tracking-wider text-white">VAULT</span>
-          <span className="text-[9px] block text-gray-500 font-bold uppercase tracking-widest mt-0.5">unified ledger</span>
-        </div>
-      </div>
-
-      {/* User Status controls */}
-      <div className="flex items-center gap-6">
+    <>
+      <nav className="glass-panel border border-white/5 rounded-2xl px-6 py-4 flex justify-between items-center bg-slate-900/60 relative z-40">
         
-        {/* Profile Card */}
-        <div className="hidden md:flex flex-col items-end">
-          <span className="text-xs font-bold text-white">{user.fullName}</span>
-          <span className="text-[10px] text-gray-400 font-mono mt-0.5">{user.email}</span>
+        {/* Brand Logo */}
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 rounded-xl bg-blue-600/10 border border-blue-500/25">
+            <LandmarkIcon className="w-6 h-6 text-blue-400" />
+          </div>
+          <div>
+            <span className="text-lg font-black tracking-wider text-white">VAULT</span>
+            <span className="text-[9px] block text-gray-500 font-bold uppercase tracking-widest mt-0.5">unified ledger</span>
+          </div>
         </div>
 
-        {/* 2FA Shield badge */}
-        <div className="flex items-center gap-3">
-          {user.twoFaEnabled ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-bold shadow-md shadow-emerald-500/5">
-              <ShieldCheck className="w-4 h-4" /> 2FA Secured
-            </span>
-          ) : (
+        {/* User Status controls */}
+        <div className="flex items-center gap-6">
+          
+          {/* Profile Card */}
+          <div className="hidden md:flex flex-col items-end">
+            <span className="text-xs font-bold text-white">{user.fullName}</span>
+            <span className="text-[10px] text-gray-400 font-mono mt-0.5">{user.email}</span>
+          </div>
+
+          {/* 2FA Shield badge */}
+          <div className="flex items-center gap-3">
+            {user.twoFaEnabled ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-bold shadow-md shadow-emerald-500/5">
+                <ShieldCheck className="w-4 h-4" /> 2FA Secured
+              </span>
+            ) : (
+              <button
+                onClick={handleSetup2FA}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500/20 text-amber-400 hover:text-amber-300 text-xs font-bold transition-all cursor-pointer shadow-md shadow-amber-500/5"
+              >
+                <ShieldAlert className="w-4 h-4" /> Enable 2FA
+              </button>
+            )}
+
+            {/* Logout */}
             <button
-              onClick={handleSetup2FA}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500/20 text-amber-400 hover:text-amber-300 text-xs font-bold transition-all cursor-pointer shadow-md shadow-amber-500/5"
+              onClick={handleLogout}
+              className="p-2 rounded-lg bg-white/5 hover:bg-rose-600/15 border border-white/5 hover:border-rose-500/25 text-gray-400 hover:text-rose-400 transition-all cursor-pointer"
+              title="Sign Out"
             >
-              <ShieldAlert className="w-4 h-4" /> Enable 2FA
+              <LogOut className="w-4 h-4" />
             </button>
-          )}
+          </div>
 
-          {/* Logout */}
-          <button
-            onClick={handleLogout}
-            className="p-2 rounded-lg bg-white/5 hover:bg-rose-600/15 border border-white/5 hover:border-rose-500/25 text-gray-400 hover:text-rose-400 transition-all cursor-pointer"
-            title="Sign Out"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
         </div>
-
-      </div>
+      </nav>
 
       {/* 2FA SETUP MODAL */}
       {show2faModal && (
@@ -199,8 +201,7 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onUpdateUser }) 
           </div>
         </div>
       )}
-
-    </nav>
+    </>
   );
 };
 

@@ -27,6 +27,6 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
     @Query("SELECT a FROM Account a WHERE a.accountNumber = :accountNumber")
     Optional<Account> findByAccountNumberForUpdate(@Param("accountNumber") String accountNumber);
 
-    @Query("SELECT COALESCE(SUM(a.balance), 0) FROM Account a")
+    @Query("SELECT SUM(a.balance) FROM Account a")
     java.math.BigDecimal sumAllBalances();
 }

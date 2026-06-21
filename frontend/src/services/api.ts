@@ -120,7 +120,7 @@ export const api = {
   auth: {
     register: (data: any) => apiClient.post('/auth/register', data),
     login: (data: any) => apiClient.post('/auth/login', data),
-    setup2fa: () => apiClient.post('/2fa/setup'), // Note base URL config, setup matches prefix
+    setup2fa: () => apiClient.post('/auth/2fa/setup'),
     verify2fa: (code: string) => apiClient.post('/auth/2fa/verify', { code }),
     validate2fa: (data: any) => apiClient.post('/auth/2fa/validate', data),
     logout: () => apiClient.post('/auth/logout').finally(() => {

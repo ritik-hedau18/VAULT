@@ -127,6 +127,9 @@ public class TransferService {
         // 5. Check daily transfer limit
         LocalDateTime startOfToday = LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT);
         BigDecimal todayTransfersSum = transactionRepository.sumSuccessfulTransfersToday(fromAccount, startOfToday);
+        if (todayTransfersSum == null) {
+            todayTransfersSum = BigDecimal.ZERO;
+        }
         BigDecimal remainingLimit = fromAccount.getDailyTransferLimit().subtract(todayTransfersSum);
         if (remainingLimit.compareTo(request.getAmount()) < 0) {
             throw new IllegalArgumentException("Daily transfer limit exceeded. Remaining limit for today is INR " + remainingLimit);
