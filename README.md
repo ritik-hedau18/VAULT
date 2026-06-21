@@ -93,7 +93,7 @@ sequenceDiagram
 
 ## 🔐 Security Features
 
-1. **AES-256-GCM Encryption**: Critical user data like `account_number` and 2FA `totp_secret` are encrypted before writing to PostgreSQL using a static JPA Attribute Converter.
+1. **AES-256-GCM Encryption**: Critical user data like `account_number` and 2FA `totp_secret` are encrypted before writing to PostgreSQL using a static JPA Attribute Converter. The IV is randomly generated per encryption (12 bytes) and prepended to ciphertext.
 2. **Distributed Locks**: To prevent concurrent overdrafts and double-spend race conditions, a Redis lock (`transfer_lock:{accountId}`) is held during transfer pipelines.
 3. **Deadlock Prevention**: Database write locks (`PESSIMISTIC_WRITE`) are acquired in sorted order based on UUID strings.
 4. **Idempotency Shield**: All transfers, deposits, and withdrawals require an `idempotency-key` header. Results are cached in Redis for 24 hours.

@@ -20,6 +20,7 @@ Thumbs.db
 **/log/
 **/logs/
 **/keystore.p12.bak
+**/*.p12
 
 # Node (React Frontend)
 **/node_modules/

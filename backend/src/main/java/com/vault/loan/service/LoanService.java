@@ -107,6 +107,12 @@ public class LoanService {
         return loanRepository.save(loan);
     }
 
+    /**
+     * Manual admin approval flow — intentional design simplification.
+     * In production, this would integrate with a credit scoring engine
+     * (e.g. bureau score check, debt-to-income ratio validation)
+     * before auto-approving or routing to underwriter queue.
+     */
     @Transactional(isolation = Isolation.REPEATABLE_READ)
     public Loan approveLoan(UUID loanId) {
         Loan loan = loanRepository.findById(loanId)

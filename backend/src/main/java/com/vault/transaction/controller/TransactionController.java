@@ -98,4 +98,21 @@ public class TransactionController {
         
         return ResponseEntity.ok(TransactionResponse.fromEntity(transaction));
     }
+
+    @GetMapping("/today-usage")
+    public ResponseEntity<java.util.Map<String, Object>> getTodayUsage(
+            @AuthenticationPrincipal User user,
+            @RequestParam UUID accountId) {
+        
+        Account account = accountService.getAccountById(accountId, user);
+        java.time.LocalDateTime startOfToday = java.time.LocalDate.now().atStartOfDay();
+        java.math.BigDecimal usage = transactionRepository.sumSuccessfulTransfersToday(account, startOfToday);
+        if (usage == null) {
+            usage = java.math.BigDecimal.ZERO;
+        }
+        
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("usage", usage);
+        return ResponseEntity.ok(response);
+    }
 }

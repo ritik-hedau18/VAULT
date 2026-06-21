@@ -31,18 +31,33 @@ export const Transfer: React.FC<TransferProps> = ({ user }) => {
   const [error, setError] = useState<string | null>(null);
   const [successData, setSuccessData] = useState<any | null>(null);
 
+  // Daily Limits State
+  const [todayUsage, setTodayUsage] = useState<number>(0);
+
   useEffect(() => {
     fetchAccounts();
     regenerateIdempotencyKey();
   }, []);
 
-  const fetchAccounts = async () => {
+  const fetchTodayUsage = async (accountId: string) => {
+    try {
+      const res = await api.transactions.getTodayUsage(accountId);
+      setTodayUsage(res.data.usage);
+    } catch (err) {
+      console.error("Failed to fetch today's usage:", err);
+    }
+  };
+
+  const fetchAccounts = async (preserveId?: string) => {
     try {
       const res = await api.accounts.getMy();
       const transferrable = res.data.filter(a => a.accountType !== 'FIXED_DEPOSIT' && a.status === 'ACTIVE');
       setAccounts(transferrable);
       if (transferrable.length > 0) {
-        setSelectedAcc(transferrable[0]);
+        const activeId = preserveId || selectedAcc?.id || transferrable[0].id;
+        const current = transferrable.find(a => a.id === activeId) || transferrable[0];
+        setSelectedAcc(current);
+        fetchTodayUsage(current.id);
       }
     } catch (err) {
       console.error(err);
@@ -90,7 +105,7 @@ export const Transfer: React.FC<TransferProps> = ({ user }) => {
       setDesc('');
       setBankCode('');
       regenerateIdempotencyKey(); // Set new key for next txn
-      fetchAccounts(); // Refresh source balance metadata
+      fetchAccounts(selectedAcc.id); // Refresh source balance metadata
     } catch (err: any) {
       setError(err.response?.data?.message || 'Transfer failed. Check details and PIN.');
     } finally {
@@ -151,7 +166,10 @@ export const Transfer: React.FC<TransferProps> = ({ user }) => {
                     value={selectedAcc?.id || ''}
                     onChange={(e) => {
                       const acc = accounts.find(a => a.id === e.target.value);
-                      if (acc) setSelectedAcc(acc);
+                      if (acc) {
+                        setSelectedAcc(acc);
+                        fetchTodayUsage(acc.id);
+                      }
                     }}
                   >
                     {accounts.map(a => (
@@ -342,10 +360,13 @@ export const Transfer: React.FC<TransferProps> = ({ user }) => {
               <div className="space-y-1">
                 <div className="flex justify-between text-xs text-gray-400">
                   <span>Transfer Limit Usage</span>
-                  <span>INR {selectedAcc.dailyTransferLimit.toLocaleString()}</span>
+                  <span>INR {todayUsage.toLocaleString('en-IN')} / INR {selectedAcc.dailyTransferLimit.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="w-full h-2 rounded bg-white/5 overflow-hidden">
-                  <div className="h-full bg-blue-500 rounded" style={{ width: '40%' }} /> {/* Mock usage progress */}
+                  <div 
+                    className="h-full bg-blue-500 rounded transition-all duration-500" 
+                    style={{ width: `${selectedAcc.dailyTransferLimit > 0 ? Math.min((todayUsage / selectedAcc.dailyTransferLimit) * 100, 100) : 0}%` }} 
+                  />
                 </div>
               </div>
               <p className="text-[10px] text-gray-500">Limits reset daily at midnight. Contact support to raise daily transfer limit.</p>

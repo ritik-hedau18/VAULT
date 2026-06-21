@@ -6,17 +6,19 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
-import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.security.SecureRandom;
 import java.util.Base64;
 
 @Component
 public class EncryptionUtil {
 
     private static final String ALGORITHM = "AES";
-    private static final String TRANSFORMATION = "AES/CBC/PKCS5Padding";
-    private static final int IV_LENGTH_BYTE = 16;
-    private static final byte[] FIXED_IV = new byte[IV_LENGTH_BYTE]; // Deterministic IV (all zeros)
+    private static final String TRANSFORMATION = "AES/GCM/NoPadding";
+    private static final int IV_LENGTH_BYTE = 12;
+    private static final int TAG_LENGTH_BIT = 128;
+    private static final SecureRandom secureRandom = new SecureRandom();
 
     private static byte[] secretKeyBytes;
 
@@ -34,13 +36,22 @@ public class EncryptionUtil {
     public static String encrypt(String value) {
         if (value == null) return null;
         try {
+            byte[] iv = new byte[IV_LENGTH_BYTE];
+            secureRandom.nextBytes(iv);
+
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
             SecretKeySpec keySpec = new SecretKeySpec(getKeyBytes(), ALGORITHM);
-            IvParameterSpec ivSpec = new IvParameterSpec(FIXED_IV);
-            cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec);
+            GCMParameterSpec gcmSpec = new GCMParameterSpec(TAG_LENGTH_BIT, iv);
+            cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmSpec);
 
             byte[] encryptedText = cipher.doFinal(value.getBytes());
-            return Base64.getEncoder().encodeToString(encryptedText);
+
+            // Prepended IV before ciphertext
+            byte[] combined = new byte[iv.length + encryptedText.length];
+            System.arraycopy(iv, 0, combined, 0, iv.length);
+            System.arraycopy(encryptedText, 0, combined, iv.length, encryptedText.length);
+
+            return Base64.getEncoder().encodeToString(combined);
         } catch (Exception e) {
             throw new RuntimeException("Error occurred during encryption", e);
         }
@@ -49,14 +60,24 @@ public class EncryptionUtil {
     public static String decrypt(String encryptedValue) {
         if (encryptedValue == null) return null;
         try {
-            byte[] decoded = Base64.getDecoder().decode(encryptedValue);
+            byte[] combined = Base64.getDecoder().decode(encryptedValue);
+            if (combined.length < IV_LENGTH_BYTE) {
+                throw new IllegalArgumentException("Invalid encrypted text: too short");
+            }
+
+            byte[] iv = new byte[IV_LENGTH_BYTE];
+            System.arraycopy(combined, 0, iv, 0, IV_LENGTH_BYTE);
+
+            int ciphertextLen = combined.length - IV_LENGTH_BYTE;
+            byte[] ciphertext = new byte[ciphertextLen];
+            System.arraycopy(combined, IV_LENGTH_BYTE, ciphertext, 0, ciphertextLen);
 
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
             SecretKeySpec keySpec = new SecretKeySpec(getKeyBytes(), ALGORITHM);
-            IvParameterSpec ivSpec = new IvParameterSpec(FIXED_IV);
-            cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec);
+            GCMParameterSpec gcmSpec = new GCMParameterSpec(TAG_LENGTH_BIT, iv);
+            cipher.init(Cipher.DECRYPT_MODE, keySpec, gcmSpec);
 
-            byte[] decryptedText = cipher.doFinal(decoded);
+            byte[] decryptedText = cipher.doFinal(ciphertext);
             return new String(decryptedText);
         } catch (Exception e) {
             throw new RuntimeException("Error occurred during decryption", e);

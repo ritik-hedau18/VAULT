@@ -165,6 +165,8 @@ export const api = {
     getHistory: (accountId: string, page = 0, size = 10) => 
       apiClient.get<any>(`/transactions/history`, { params: { accountId, page, size } }),
     getDetails: (refNo: string) => apiClient.get<Transaction>(`/transactions/${refNo}`),
+    getTodayUsage: (accountId: string) => 
+      apiClient.get<{ usage: number }>('/transactions/today-usage', { params: { accountId } }),
   },
 
   // Loan Module
