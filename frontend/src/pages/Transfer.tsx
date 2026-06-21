@@ -156,7 +156,7 @@ export const Transfer: React.FC<TransferProps> = ({ user }) => {
                   >
                     {accounts.map(a => (
                       <option key={a.id} value={a.id}>
-                        {a.accountType} - {a.accountNumber} (Bal: INR {a.balance.toLocaleString()})
+                        {a.accountType} - {a.accountNumber.length > 4 ? `XXXX XXXX XXXX ${a.accountNumber.slice(-4)}` : a.accountNumber} (Bal: INR {a.balance.toLocaleString()})
                       </option>
                     ))}
                   </select>

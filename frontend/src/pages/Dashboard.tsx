@@ -3,7 +3,8 @@ import { api } from '../services/api';
 import { Account, Transaction, AccountType } from '../types';
 import { 
   CreditCard, ArrowUpRight, ArrowDownLeft, RefreshCw, Plus, 
-  Wallet, Info, HelpCircle, Lock, Calendar, FileText, CheckCircle2, AlertTriangle, Loader2 
+  Wallet, Info, HelpCircle, Lock, Calendar, FileText, CheckCircle2, AlertTriangle, Loader2,
+  Eye, EyeOff, Copy
 } from 'lucide-react';
 
 interface DashboardProps {
@@ -36,6 +37,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const [withdrawDesc, setWithdrawDesc] = useState('');
 
   const [error, setError] = useState<string | null>(null);
+  const [showFullAcc, setShowFullAcc] = useState(false);
+
+  const handleCopyAcc = () => {
+    if (selectedAccount) {
+      navigator.clipboard.writeText(selectedAccount.accountNumber);
+      alert("Account number copied to clipboard!");
+    }
+  };
+
+  const formatAccountNumber = (accNum: string) => {
+    if (!accNum) return '';
+    if (showFullAcc) return accNum;
+    if (accNum.length <= 4) return '****';
+    return "XXXX XXXX XXXX " + accNum.slice(-4);
+  };
 
   useEffect(() => {
     fetchAccounts();
@@ -173,7 +189,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             >
               {accounts.map(a => (
                 <option key={a.id} value={a.id}>
-                  {a.accountType} - {a.accountNumber}
+                  {a.accountType} - {a.accountNumber.length > 4 ? `XXXX XXXX XXXX ${a.accountNumber.slice(-4)}` : a.accountNumber}
                 </option>
               ))}
             </select>
@@ -234,9 +250,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                 </div>
 
                 <div className="pt-4 border-t border-white/5 space-y-3">
-                  <div className="flex justify-between text-xs">
+                  <div className="flex justify-between text-xs items-center">
                     <span className="text-gray-400">Account Number</span>
-                    <span className="text-white font-semibold font-mono">{selectedAccount.accountNumber}</span>
+                    <span className="text-white font-semibold font-mono flex items-center gap-2">
+                      {formatAccountNumber(selectedAccount.accountNumber)}
+                      <button 
+                        type="button"
+                        onClick={() => setShowFullAcc(!showFullAcc)} 
+                        className="p-0.5 rounded hover:bg-white/5 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                        title={showFullAcc ? "Hide account number" : "Show account number"}
+                      >
+                        {showFullAcc ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={handleCopyAcc} 
+                        className="p-0.5 rounded hover:bg-white/5 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                        title="Copy account number"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span className="text-gray-400">Daily Transfer Limit</span>
@@ -448,7 +482,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-md glass-panel rounded-2xl p-6 border border-white/10 relative">
             <h3 className="text-lg font-bold text-white mb-4">Deposit Funds</h3>
-            <p className="text-xs text-gray-400 mb-4">Crediting account: <span className="text-white font-semibold font-mono">{selectedAccount.accountNumber}</span></p>
+            <p className="text-xs text-gray-400 mb-4 flex items-center gap-2">
+              Crediting account: <span className="text-white font-semibold font-mono">{showFullAcc ? selectedAccount.accountNumber : formatAccountNumber(selectedAccount.accountNumber)}</span>
+              <button onClick={() => setShowFullAcc(!showFullAcc)} className="text-gray-500 hover:text-white transition-colors">{showFullAcc ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}</button>
+              <button onClick={() => navigator.clipboard.writeText(selectedAccount.accountNumber)} className="text-gray-500 hover:text-white transition-colors"><Copy className="w-3 h-3" /></button>
+            </p>
             
             {error && (
               <div className="mb-4 p-3 rounded bg-rose-500/15 border border-rose-500/30 text-rose-200 text-xs flex gap-2">
@@ -506,7 +544,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-md glass-panel rounded-2xl p-6 border border-white/10 relative">
             <h3 className="text-lg font-bold text-white mb-4 font-semibold">Withdraw Funds</h3>
-            <p className="text-xs text-gray-400 mb-4">Debiting account: <span className="text-white font-semibold font-mono">{selectedAccount.accountNumber}</span></p>
+            <p className="text-xs text-gray-400 mb-4 flex items-center gap-2">
+              Debiting account: <span className="text-white font-semibold font-mono">{showFullAcc ? selectedAccount.accountNumber : formatAccountNumber(selectedAccount.accountNumber)}</span>
+              <button onClick={() => setShowFullAcc(!showFullAcc)} className="text-gray-500 hover:text-white transition-colors">{showFullAcc ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}</button>
+              <button onClick={() => navigator.clipboard.writeText(selectedAccount.accountNumber)} className="text-gray-500 hover:text-white transition-colors"><Copy className="w-3 h-3" /></button>
+            </p>
 
             {error && (
               <div className="mb-4 p-3 rounded bg-rose-500/15 border border-rose-500/30 text-rose-200 text-xs flex gap-2">

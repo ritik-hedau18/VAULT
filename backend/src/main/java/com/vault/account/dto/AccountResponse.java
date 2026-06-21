@@ -32,7 +32,7 @@ public class AccountResponse {
         return AccountResponse.builder()
                 .id(account.getId())
                 .userId(account.getUser().getId())
-                .accountNumber(maskAccountNumber(account.getAccountNumber()))
+                .accountNumber(account.getAccountNumber())
                 .accountType(account.getAccountType())
                 .balance(account.getBalance())
                 .currency(account.getCurrency())
@@ -43,13 +43,5 @@ public class AccountResponse {
                 .kycDocReference(account.getKycDocReference())
                 .createdAt(account.getCreatedAt())
                 .build();
-    }
-
-    private static String maskAccountNumber(String rawAccountNumber) {
-        if (rawAccountNumber == null) return null;
-        if (rawAccountNumber.length() <= 4) {
-            return "****";
-        }
-        return "XXXX XXXX XXXX " + rawAccountNumber.substring(rawAccountNumber.length() - 4);
     }
 }
