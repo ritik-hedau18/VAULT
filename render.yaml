@@ -1,20 +1,28 @@
 version: '1'
 
-databases:
-  - name: vault-postgres
-    databaseName: vaultdb
-    user: vaultuser
-    plan: free
-
 services:
-  # Redis Private Service (Free tier, no persistent disk to avoid charges)
+  # PostgreSQL Private Service (Bypasses Render's 1-free-database limit)
+  - type: pserv
+    name: vault-postgres
+    runtime: image
+    image: docker.io/library/postgres:15-alpine
+    plan: free
+    envVars:
+      - key: POSTGRES_DB
+        value: vaultdb
+      - key: POSTGRES_USER
+        value: vaultuser
+      - key: POSTGRES_PASSWORD
+        value: vaultpassword
+
+  # Redis Private Service (Free tier)
   - type: pserv
     name: vault-redis
     runtime: image
     image: docker.io/library/redis:7-alpine
     plan: free
 
-  # MongoDB Private Service (Free tier, no persistent disk to avoid charges)
+  # MongoDB Private Service (Free tier)
   - type: pserv
     name: vault-mongodb
     runtime: image
@@ -31,20 +39,14 @@ services:
         value: "false"
       - key: PORT
         value: "8080"
-      - key: DB_HOST
-        fromDatabase: { name: vault-postgres, property: host }
-      - key: DB_PORT
-        fromDatabase: { name: vault-postgres, property: port }
-      - key: DB_NAME
-        fromDatabase: { name: vault-postgres, property: databaseName }
       - key: DB_URL
-        value: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+        value: jdbc:postgresql://vault-postgres:5432/vaultdb
       - key: DB_USER
-        fromDatabase: { name: vault-postgres, property: user }
+        value: vaultuser
       - key: DB_PASSWORD
-        fromDatabase: { name: vault-postgres, property: password }
+        value: vaultpassword
       - key: REDIS_HOST
-        fromService: { name: vault-redis, property: host }
+        value: vault-redis
       - key: REDIS_PORT
         value: "6379"
       - key: MONGO_URI
