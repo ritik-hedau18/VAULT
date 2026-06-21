@@ -6,19 +6,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
-import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.nio.ByteBuffer;
-import java.security.SecureRandom;
 import java.util.Base64;
 
 @Component
 public class EncryptionUtil {
 
     private static final String ALGORITHM = "AES";
-    private static final String TRANSFORMATION = "AES/GCM/NoPadding";
-    private static final int IV_LENGTH_BYTE = 12;
-    private static final int TAG_LENGTH_BIT = 128;
+    private static final String TRANSFORMATION = "AES/CBC/PKCS5Padding";
+    private static final int IV_LENGTH_BYTE = 16;
+    private static final byte[] FIXED_IV = new byte[IV_LENGTH_BYTE]; // Deterministic IV (all zeros)
 
     private static byte[] secretKeyBytes;
 
@@ -27,7 +25,6 @@ public class EncryptionUtil {
         if (secretKey == null || secretKey.length() < 16) {
             throw new IllegalArgumentException("AES secret key must be at least 16 characters long");
         }
-        // Ensure key is 16, 24, or 32 bytes.
         byte[] raw = secretKey.getBytes();
         byte[] key = new byte[32]; // Default to 256-bit AES
         System.arraycopy(raw, 0, key, 0, Math.min(raw.length, key.length));
@@ -37,22 +34,13 @@ public class EncryptionUtil {
     public static String encrypt(String value) {
         if (value == null) return null;
         try {
-            byte[] iv = new byte[IV_LENGTH_BYTE];
-            SecureRandom random = new SecureRandom();
-            random.nextBytes(iv);
-
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
             SecretKeySpec keySpec = new SecretKeySpec(getKeyBytes(), ALGORITHM);
-            GCMParameterSpec parameterSpec = new GCMParameterSpec(TAG_LENGTH_BIT, iv);
-            cipher.init(Cipher.ENCRYPT_MODE, keySpec, parameterSpec);
+            IvParameterSpec ivSpec = new IvParameterSpec(FIXED_IV);
+            cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec);
 
             byte[] encryptedText = cipher.doFinal(value.getBytes());
-
-            ByteBuffer byteBuffer = ByteBuffer.allocate(iv.length + encryptedText.length);
-            byteBuffer.put(iv);
-            byteBuffer.put(encryptedText);
-
-            return Base64.getEncoder().encodeToString(byteBuffer.array());
+            return Base64.getEncoder().encodeToString(encryptedText);
         } catch (Exception e) {
             throw new RuntimeException("Error occurred during encryption", e);
         }
@@ -63,19 +51,12 @@ public class EncryptionUtil {
         try {
             byte[] decoded = Base64.getDecoder().decode(encryptedValue);
 
-            ByteBuffer byteBuffer = ByteBuffer.wrap(decoded);
-            byte[] iv = new byte[IV_LENGTH_BYTE];
-            byteBuffer.get(iv);
-
-            byte[] encryptedText = new byte[byteBuffer.remaining()];
-            byteBuffer.get(encryptedText);
-
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
             SecretKeySpec keySpec = new SecretKeySpec(getKeyBytes(), ALGORITHM);
-            GCMParameterSpec parameterSpec = new GCMParameterSpec(TAG_LENGTH_BIT, iv);
-            cipher.init(Cipher.DECRYPT_MODE, keySpec, parameterSpec);
+            IvParameterSpec ivSpec = new IvParameterSpec(FIXED_IV);
+            cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec);
 
-            byte[] decryptedText = cipher.doFinal(encryptedText);
+            byte[] decryptedText = cipher.doFinal(decoded);
             return new String(decryptedText);
         } catch (Exception e) {
             throw new RuntimeException("Error occurred during decryption", e);
@@ -84,7 +65,6 @@ public class EncryptionUtil {
 
     private static byte[] getKeyBytes() {
         if (secretKeyBytes == null) {
-            // Spring hasn't initialized the bean yet, fetch from Env
             String envKey = System.getenv("AES_SECRET_KEY");
             if (envKey == null) {
                 envKey = "SuperSecretVaultKeyEncryptAtRest12"; // Fallback default
