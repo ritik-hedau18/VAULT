@@ -1,0 +1,57 @@
+version: '1'
+
+databases:
+  - name: vault-postgres
+    databaseName: vaultdb
+    user: vaultuser
+    plan: free
+
+services:
+  # Redis Private Service (Free tier, no persistent disk to avoid charges)
+  - type: pserv
+    name: vault-redis
+    runtime: image
+    image: docker.io/library/redis:7-alpine
+    plan: free
+
+  # MongoDB Private Service (Free tier, no persistent disk to avoid charges)
+  - type: pserv
+    name: vault-mongodb
+    runtime: image
+    image: docker.io/library/mongo:6
+    plan: free
+
+  # Java Spring Boot Backend Web Service
+  - type: web
+    name: vault-backend
+    runtime: docker
+    plan: free
+    envVars:
+      - key: SERVER_SSL_ENABLED
+        value: "false"
+      - key: PORT
+        value: "8080"
+      - key: DB_HOST
+        fromDatabase: { name: vault-postgres, property: host }
+      - key: DB_PORT
+        fromDatabase: { name: vault-postgres, property: port }
+      - key: DB_NAME
+        fromDatabase: { name: vault-postgres, property: databaseName }
+      - key: DB_URL
+        value: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - key: DB_USER
+        fromDatabase: { name: vault-postgres, property: user }
+      - key: DB_PASSWORD
+        fromDatabase: { name: vault-postgres, property: password }
+      - key: REDIS_HOST
+        fromService: { name: vault-redis, property: host }
+      - key: REDIS_PORT
+        value: "6379"
+      - key: MONGO_URI
+        value: mongodb://vault-mongodb:27017/vault_audit?directConnection=true
+      - key: JWT_SECRET
+        generateValue: true
+      - key: AES_SECRET_KEY
+        value: "SuperSecretVaultKeyEncryptAtRest12"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "http://localhost:5173" # Update this in Render dashboard settings with Vercel frontend URL once deployed
