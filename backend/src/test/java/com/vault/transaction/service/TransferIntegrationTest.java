@@ -11,8 +11,10 @@ import com.vault.auth.repository.UserRepository;
 import com.vault.transaction.dto.TransactionResponse;
 import com.vault.transaction.dto.TransferRequest;
 import com.vault.transaction.entity.Transaction;
+import com.vault.transaction.entity.TransactionStatus;
 import com.vault.transaction.repository.TransactionRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -89,7 +91,7 @@ public class TransferIntegrationTest {
                 .email("sender@test.com")
                 .passwordHash(passwordEncoder.encode("Password123"))
                 .transactionPinHash(passwordEncoder.encode("1234"))
-                .role(UserRole.USER)
+                .role(UserRole.CUSTOMER)
                 .status(UserStatus.ACTIVE)
                 .build());
 
@@ -98,7 +100,7 @@ public class TransferIntegrationTest {
                 .email("receiver@test.com")
                 .passwordHash(passwordEncoder.encode("Password123"))
                 .transactionPinHash(passwordEncoder.encode("1234"))
-                .role(UserRole.USER)
+                .role(UserRole.CUSTOMER)
                 .status(UserStatus.ACTIVE)
                 .build());
 
@@ -122,21 +124,26 @@ public class TransferIntegrationTest {
                 .build());
     }
 
+    @AfterEach
+    void tearDown() throws InterruptedException {
+        // Allow async listener tasks (audit logs/notifications) to complete before tearing down context
+        Thread.sleep(1000);
+    }
+
     @Test
     void testTransfer_SameBank_Success() {
-        TransferRequest request = TransferRequest.builder()
-                .fromAccountId(senderAccount.getId())
-                .toAccountNumber("444455556666")
-                .interBank(false)
-                .amount(new BigDecimal("15000.00"))
-                .transactionPin("1234")
-                .description("Rent Payment")
-                .build();
+        TransferRequest request = new TransferRequest();
+        request.setFromAccountId(senderAccount.getId());
+        request.setToAccountNumber("444455556666");
+        request.setInterBank(false);
+        request.setAmount(new BigDecimal("15000.00"));
+        request.setTransactionPin("1234");
+        request.setDescription("Rent Payment");
 
         TransactionResponse response = transferService.transfer(senderUser, request, UUID.randomUUID().toString());
 
         assertNotNull(response);
-        assertEquals("SUCCESS", response.getStatus());
+        assertEquals(TransactionStatus.SUCCESS, response.getStatus());
 
         Account updatedSender = accountRepository.findById(senderAccount.getId()).orElseThrow();
         Account updatedReceiver = accountRepository.findById(receiverAccount.getId()).orElseThrow();
@@ -152,14 +159,13 @@ public class TransferIntegrationTest {
 
     @Test
     void testTransfer_Idempotency() {
-        TransferRequest request = TransferRequest.builder()
-                .fromAccountId(senderAccount.getId())
-                .toAccountNumber("444455556666")
-                .interBank(false)
-                .amount(new BigDecimal("5000.00"))
-                .transactionPin("1234")
-                .description("Idempotent Payment")
-                .build();
+        TransferRequest request = new TransferRequest();
+        request.setFromAccountId(senderAccount.getId());
+        request.setToAccountNumber("444455556666");
+        request.setInterBank(false);
+        request.setAmount(new BigDecimal("5000.00"));
+        request.setTransactionPin("1234");
+        request.setDescription("Idempotent Payment");
 
         String idempotencyKey = UUID.randomUUID().toString();
 
@@ -185,23 +191,21 @@ public class TransferIntegrationTest {
 
     @Test
     void testTransfer_ConcurrentTransfers_NoDoubleSpend() throws InterruptedException {
-        TransferRequest request1 = TransferRequest.builder()
-                .fromAccountId(senderAccount.getId())
-                .toAccountNumber("444455556666")
-                .interBank(false)
-                .amount(new BigDecimal("30000.00"))
-                .transactionPin("1234")
-                .description("Concurrent Payment 1")
-                .build();
+        TransferRequest request1 = new TransferRequest();
+        request1.setFromAccountId(senderAccount.getId());
+        request1.setToAccountNumber("444455556666");
+        request1.setInterBank(false);
+        request1.setAmount(new BigDecimal("30000.00"));
+        request1.setTransactionPin("1234");
+        request1.setDescription("Concurrent Payment 1");
 
-        TransferRequest request2 = TransferRequest.builder()
-                .fromAccountId(senderAccount.getId())
-                .toAccountNumber("444455556666")
-                .interBank(false)
-                .amount(new BigDecimal("30000.00"))
-                .transactionPin("1234")
-                .description("Concurrent Payment 2")
-                .build();
+        TransferRequest request2 = new TransferRequest();
+        request2.setFromAccountId(senderAccount.getId());
+        request2.setToAccountNumber("444455556666");
+        request2.setInterBank(false);
+        request2.setAmount(new BigDecimal("30000.00"));
+        request2.setTransactionPin("1234");
+        request2.setDescription("Concurrent Payment 2");
 
         ExecutorService executor = Executors.newFixedThreadPool(2);
         CountDownLatch latch = new CountDownLatch(1);
@@ -249,14 +253,13 @@ public class TransferIntegrationTest {
 
     @Test
     void testTransfer_InsufficientBalance_RollsBack() {
-        TransferRequest request = TransferRequest.builder()
-                .fromAccountId(senderAccount.getId())
-                .toAccountNumber("444455556666")
-                .interBank(false)
-                .amount(new BigDecimal("60000.00"))
-                .transactionPin("1234")
-                .description("Failed Payment")
-                .build();
+        TransferRequest request = new TransferRequest();
+        request.setFromAccountId(senderAccount.getId());
+        request.setToAccountNumber("444455556666");
+        request.setInterBank(false);
+        request.setAmount(new BigDecimal("60000.00"));
+        request.setTransactionPin("1234");
+        request.setDescription("Failed Payment");
 
         assertThrows(Exception.class, () -> {
             transferService.transfer(senderUser, request, UUID.randomUUID().toString());

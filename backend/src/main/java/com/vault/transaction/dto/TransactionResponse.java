@@ -5,6 +5,8 @@ import com.vault.transaction.entity.TransactionStatus;
 import com.vault.transaction.entity.TransactionType;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -12,6 +14,8 @@ import java.util.UUID;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class TransactionResponse {
     private UUID id;
     private String referenceNumber;
