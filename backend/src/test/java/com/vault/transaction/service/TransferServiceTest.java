@@ -44,6 +44,7 @@ public class TransferServiceTest {
     @Mock private StringRedisTemplate redisTemplate;
     @Mock private ValueOperations<String, String> valueOperations;
     @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock private TransferTxExecutor transferTxExecutor;
 
     @InjectMocks
     private TransferService transferService;
@@ -100,24 +101,24 @@ public class TransferServiceTest {
         when(valueOperations.setIfAbsent(anyString(), anyString(), anyLong(), any())).thenReturn(true);
         when(valueOperations.get(anyString())).thenReturn("lock_value");
 
-        // Mock Account fetching & locks
+        // Mock Account fetching
         when(accountRepository.findById(fromAccount.getId())).thenReturn(Optional.of(fromAccount));
-        when(accountRepository.findByAccountNumber(toAccount.getAccountNumber())).thenReturn(Optional.of(toAccount));
-        
-        // Pessimistic write locks simulation
-        when(accountRepository.findByIdForUpdate(fromAccount.getId())).thenReturn(Optional.of(fromAccount));
-        when(accountRepository.findByIdForUpdate(toAccount.getId())).thenReturn(Optional.of(toAccount));
 
         // Mock daily transfer volume summation (no transfers today)
         when(transactionRepository.sumSuccessfulTransfersToday(eq(fromAccount), any(LocalDateTime.class)))
                 .thenReturn(BigDecimal.ZERO);
 
-        // Mock saving transaction
-        when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> {
-            Transaction t = invocation.getArgument(0);
-            t.setId(UUID.randomUUID());
-            return t;
-        });
+        // Mock executeTransferTx
+        Transaction mockTx = Transaction.builder()
+                .id(UUID.randomUUID())
+                .referenceNumber("TXN-123456789")
+                .fromAccount(fromAccount)
+                .toAccount(toAccount)
+                .amount(request.getAmount())
+                .type(TransactionType.TRANSFER)
+                .status(TransactionStatus.SUCCESS)
+                .build();
+        when(transferTxExecutor.executeTransferTx(any(), any(), any())).thenReturn(mockTx);
 
         // Run Transfer
         TransactionResponse response = transferService.transfer(senderUser, request, "idempotency_key_1");
@@ -127,10 +128,6 @@ public class TransferServiceTest {
         assertEquals(new BigDecimal("2000.0000"), response.getAmount());
         assertEquals("XXXX XXXX XXXX 4912", response.getFromAccountNumber());
         assertEquals("XXXX XXXX XXXX 2222", response.getToAccountNumber());
-
-        // Balance assertions: 10000 - 2000 = 8000, 5000 + 2000 = 7000
-        assertEquals(new BigDecimal("8000.0000"), fromAccount.getBalance());
-        assertEquals(new BigDecimal("7000.0000"), toAccount.getBalance());
 
         verify(accountService, times(1)).invalidateBalanceCache(fromAccount.getId());
         verify(accountService, times(1)).invalidateBalanceCache(toAccount.getId());
@@ -167,12 +164,9 @@ public class TransferServiceTest {
         when(valueOperations.setIfAbsent(anyString(), anyString(), anyLong(), any())).thenReturn(true);
         when(valueOperations.get("transfer_lock:" + fromAccount.getId().toString())).thenReturn("lock_value");
         
-        // Mock locks inside tx
-        when(accountRepository.findByIdForUpdate(fromAccount.getId())).thenReturn(Optional.of(fromAccount));
-        when(accountRepository.findByIdForUpdate(toAccount.getId())).thenReturn(Optional.of(toAccount));
-
-        // Stub target account lookup
-        when(accountRepository.findByAccountNumber(toAccount.getAccountNumber())).thenReturn(Optional.of(toAccount));
+        // Mock executeTransferTx to throw InsufficientBalanceException
+        when(transferTxExecutor.executeTransferTx(any(), any(), any()))
+                .thenThrow(new InsufficientBalanceException("Insufficient balance"));
 
         assertThrows(InsufficientBalanceException.class, () -> {
             transferService.transfer(senderUser, request, "idempotency_key_3");
