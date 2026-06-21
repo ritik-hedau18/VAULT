@@ -190,6 +190,7 @@ export const api = {
     getTransactions: (page = 0, size = 10) => apiClient.get<any>('/admin/transactions', { params: { page, size } }),
     approveLoan: (id: string) => apiClient.post<Loan>(`/admin/loans/${id}/approve`),
     rejectLoan: (id: string) => apiClient.post<Loan>(`/admin/loans/${id}/reject`),
+    getLoans: () => apiClient.get<Loan[]>('/admin/loans'),
     getStats: () => apiClient.get<DashboardStats>('/admin/dashboard/stats'),
   }
 };

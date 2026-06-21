@@ -73,24 +73,8 @@ export const Admin: React.FC = () => {
   const fetchLoans = async () => {
     setLoading(true);
     try {
-      // In LoanController we exposed getMyLoans, but for admin we can list all loans.
-      // Let's fetch all loans. Since we added getAllLoansForAdmin in LoanService, let's make sure it's accessible.
-      // Wait! Did we expose a GET all loans endpoint for Admin?
-      // Let's check our endpoints list or AdminController:
-      // We have:
-      // - POST /api/admin/loans/{id}/approve
-      // - POST /api/admin/loans/{id}/reject
-      // Wait, did we add a GET all loans endpoint for Admin in AdminController? Let's check AdminController.java code.
-      // In AdminController.java, we had:
-      // - Users, Accounts freeze, Transactions, Loan Approve, Loan Reject, Stats.
-      // Wait, we did NOT add a list all loans endpoint inside AdminController! But wait, in `LoanService.java` we wrote `getAllLoansForAdmin`.
-      // Let's check if we can list the loans by just calling the loans endpoint, or if we should add a `/admin/loans` endpoint in `AdminController.java`.
-      // Adding a `/api/admin/loans` endpoint in `AdminController.java` to fetch all loans is extremely clean!
-      // Wait, let's check: can we fetch all loans by query or filter?
-      // Let's check `AdminController.java`. It doesn't have `@GetMapping("/loans")`.
-      // Let's add `@GetMapping("/loans")` to `AdminController.java` to fetch all loans for the admin. That will make the admin UI 100% complete!
-      // Let's check what JpaRepository methods we have: `loanRepository.findAll()`.
-      // Let's view `AdminController.java` around line 70-85 to see where to insert.
+      const res = await api.admin.getLoans();
+      setLoans(res.data);
     } catch (err) {
       console.error(err);
     } finally {
