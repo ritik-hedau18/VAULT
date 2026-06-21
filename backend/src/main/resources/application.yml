@@ -30,6 +30,9 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      ssl:
+        enabled: ${REDIS_SSL_ENABLED:false}
     mongodb:
       uri: ${MONGO_URI:mongodb://localhost:27017/vault_audit}
 
