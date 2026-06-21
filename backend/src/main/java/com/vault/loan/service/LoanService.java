@@ -11,6 +11,8 @@ import com.vault.loan.dto.LoanApplicationRequest;
 import com.vault.loan.dto.LoanRepaymentRequest;
 import com.vault.loan.entity.Loan;
 import com.vault.loan.entity.LoanStatus;
+import com.vault.loan.entity.LoanInterestRate;
+import com.vault.loan.repository.LoanInterestRateRepository;
 import com.vault.loan.repository.LoanRepository;
 import com.vault.transaction.TransactionEvent;
 import com.vault.transaction.entity.Transaction;
@@ -43,6 +45,19 @@ public class LoanService {
     private final TransactionRepository transactionRepository;
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher eventPublisher;
+    private final LoanInterestRateRepository loanInterestRateRepository;
+
+    public List<LoanInterestRate> getInterestRates() {
+        return loanInterestRateRepository.findAll();
+    }
+
+    @Transactional
+    public LoanInterestRate updateInterestRate(com.vault.loan.entity.LoanType loanType, BigDecimal newRate) {
+        LoanInterestRate rate = loanInterestRateRepository.findById(loanType)
+                .orElseGet(() -> LoanInterestRate.builder().loanType(loanType).build());
+        rate.setInterestRate(newRate);
+        return loanInterestRateRepository.save(rate);
+    }
 
     public BigDecimal calculateEMI(BigDecimal principal, BigDecimal annualRate, int tenureMonths) {
         double r = annualRate.doubleValue() / 12.0 / 100.0;
@@ -71,14 +86,18 @@ public class LoanService {
             throw new IllegalArgumentException("Account must be ACTIVE for loan operations");
         }
 
-        BigDecimal emi = calculateEMI(request.getPrincipal(), request.getInterestRate(), request.getTenureMonths());
+        LoanInterestRate rateConfig = loanInterestRateRepository.findById(request.getLoanType())
+                .orElseThrow(() -> new IllegalArgumentException("Interest rate not configured for loan type: " + request.getLoanType()));
+        BigDecimal activeInterestRate = rateConfig.getInterestRate();
+
+        BigDecimal emi = calculateEMI(request.getPrincipal(), activeInterestRate, request.getTenureMonths());
 
         Loan loan = Loan.builder()
                 .user(user)
                 .account(account)
                 .loanType(request.getLoanType())
                 .principal(request.getPrincipal())
-                .interestRate(request.getInterestRate())
+                .interestRate(activeInterestRate)
                 .tenureMonths(request.getTenureMonths())
                 .emiAmount(emi)
                 .outstandingAmount(request.getPrincipal())

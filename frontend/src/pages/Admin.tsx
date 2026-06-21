@@ -19,6 +19,11 @@ export const Admin: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [processing, setProcessing] = useState<string | null>(null);
 
+  // Interest Rates Policy
+  const [personalRate, setPersonalRate] = useState('12.5');
+  const [homeRate, setHomeRate] = useState('8.5');
+  const [carRate, setCarRate] = useState('9.5');
+
   useEffect(() => {
     fetchStats();
     if (activeSubTab === 'users') fetchUsersAndAccounts();
@@ -75,10 +80,31 @@ export const Admin: React.FC = () => {
     try {
       const res = await api.admin.getLoans();
       setLoans(res.data);
+
+      // Fetch dynamic interest rates
+      const ratesRes = await api.loans.getInterestRates();
+      ratesRes.data.forEach(item => {
+        if (item.loanType === 'PERSONAL') setPersonalRate(item.interestRate.toString());
+        if (item.loanType === 'HOME') setHomeRate(item.interestRate.toString());
+        if (item.loanType === 'CAR') setCarRate(item.interestRate.toString());
+      });
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUpdateRate = async (loanType: string, rate: string) => {
+    try {
+      await api.admin.updateInterestRate({
+        loanType,
+        interestRate: parseFloat(rate),
+      });
+      alert(`${loanType} interest rate updated successfully to ${rate}%`);
+      fetchLoans();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to update interest rate.');
     }
   };
 
@@ -238,8 +264,8 @@ export const Admin: React.FC = () => {
                 <input 
                   type="text" 
                   id="adminLockAccId"
-                  placeholder="Enter Account UUID"
-                  className="w-full px-3 py-2 rounded-lg glass-input text-xs font-mono"
+                  placeholder="Enter Account ID or Number"
+                  className="w-full px-3 py-2 rounded-lg glass-input text-xs font-mono text-white"
                 />
                 <div className="flex gap-2">
                   <button
@@ -364,81 +390,160 @@ export const Admin: React.FC = () => {
 
       {/* 4. LOAN APPROVALS PANEL */}
       {activeSubTab === 'loans' && (
-        <div className="glass-panel rounded-2xl border border-white/5 overflow-hidden">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-              <span className="text-xs text-gray-400 mt-2">Loading applications...</span>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            {/* Interest Rates Policy Management */}
+            <div className="glass-panel rounded-2xl p-6 border border-white/5 md:col-span-1 space-y-4">
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <Landmark className="w-4 h-4 text-indigo-400" /> RBI Interest Rates
+              </h3>
+              <p className="text-xs text-gray-400">Configure loan rates. These are fetched and enforced during applicant estimates and submissions.</p>
+              
+              <div className="space-y-3 pt-2">
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Personal Loan Rate (% p.a.)</label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="number" 
+                      step="0.01"
+                      min="1"
+                      value={personalRate}
+                      onChange={(e) => setPersonalRate(e.target.value)}
+                      className="w-full px-3 py-1.5 rounded-lg glass-input text-xs text-white"
+                    />
+                    <button
+                      onClick={() => handleUpdateRate('PERSONAL', personalRate)}
+                      className="px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-colors cursor-pointer"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Home Loan Rate (% p.a.)</label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="number" 
+                      step="0.01"
+                      min="1"
+                      value={homeRate}
+                      onChange={(e) => setHomeRate(e.target.value)}
+                      className="w-full px-3 py-1.5 rounded-lg glass-input text-xs text-white"
+                    />
+                    <button
+                      onClick={() => handleUpdateRate('HOME', homeRate)}
+                      className="px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-colors cursor-pointer"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Car Loan Rate (% p.a.)</label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="number" 
+                      step="0.01"
+                      min="1"
+                      value={carRate}
+                      onChange={(e) => setCarRate(e.target.value)}
+                      className="w-full px-3 py-1.5 rounded-lg glass-input text-xs text-white"
+                    />
+                    <button
+                      onClick={() => handleUpdateRate('CAR', carRate)}
+                      className="px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-colors cursor-pointer"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="bg-white/5 text-gray-300 font-semibold uppercase tracking-wider">
-                    <th className="p-3">Loan ID</th>
-                    <th className="p-3">Customer</th>
-                    <th className="p-3">Type</th>
-                    <th className="p-3">Principal</th>
-                    <th className="p-3">Tenure</th>
-                    <th className="p-3">Monthly EMI</th>
-                    <th className="p-3">Status</th>
-                    <th className="p-3 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5 text-gray-300">
-                  {loans.length === 0 ? (
-                    <tr>
-                      <td colSpan={8} className="p-8 text-center text-gray-500">
-                        <FileText className="w-12 h-12 mx-auto mb-2" />
-                        No loan records found in database.
-                      </td>
-                    </tr>
-                  ) : (
-                    loans.map(l => (
-                      <tr key={l.id} className="hover:bg-white/5">
-                        <td className="p-3 font-mono">#{l.id.substring(0, 8).toUpperCase()}</td>
-                        <td className="p-3 font-semibold">{l.accountNumber}</td> {/* associated account number */}
-                        <td className="p-3 font-semibold">{l.loanType}</td>
-                        <td className="p-3 font-bold">INR {l.principal.toLocaleString()}</td>
-                        <td className="p-3">{l.tenureMonths} Months</td>
-                        <td className="p-3 font-bold">INR {l.emiAmount.toLocaleString()}</td>
-                        <td className="p-3">
-                          <span className={`px-2 py-0.5 rounded-full font-bold uppercase text-[10px] ${
-                            l.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400' :
-                            l.status === 'PENDING' ? 'bg-amber-500/10 text-amber-400' :
-                            l.status === 'CLOSED' ? 'bg-gray-500/10 text-gray-400' :
-                            'bg-rose-500/10 text-rose-400'
-                          }`}>{l.status}</span>
-                        </td>
-                        <td className="p-3 text-right">
-                          {l.status === 'PENDING' ? (
-                            <div className="flex justify-end gap-2">
-                              <button
-                                onClick={() => handleApproveLoan(l.id)}
-                                disabled={processing === l.id}
-                                className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] transition-colors cursor-pointer"
-                              >
-                                {processing === l.id ? '...' : 'Approve'}
-                              </button>
-                              <button
-                                onClick={() => handleRejectLoan(l.id)}
-                                disabled={processing === l.id}
-                                className="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10px] transition-colors cursor-pointer"
-                              >
-                                {processing === l.id ? '...' : 'Reject'}
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="text-gray-500">-</span>
-                          )}
-                        </td>
+
+            {/* Applications List */}
+            <div className="glass-panel rounded-2xl border border-white/5 overflow-hidden md:col-span-2 flex flex-col">
+              <div className="p-4 bg-white/5 border-b border-white/5">
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider">Loan Approval Queue</h3>
+              </div>
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-20 grow">
+                  <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                  <span className="text-xs text-gray-400 mt-2">Loading applications...</span>
+                </div>
+              ) : (
+                <div className="overflow-x-auto grow">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-white/5 text-gray-300 font-semibold uppercase tracking-wider">
+                        <th className="p-3">Loan ID</th>
+                        <th className="p-3">Customer</th>
+                        <th className="p-3">Type</th>
+                        <th className="p-3">Principal</th>
+                        <th className="p-3">Tenure</th>
+                        <th className="p-3">Monthly EMI</th>
+                        <th className="p-3">Status</th>
+                        <th className="p-3 text-right">Actions</th>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    </thead>
+                    <tbody className="divide-y divide-white/5 text-gray-300">
+                      {loans.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="p-8 text-center text-gray-500">
+                            <FileText className="w-12 h-12 mx-auto mb-2" />
+                            No loan records found in database.
+                          </td>
+                        </tr>
+                      ) : (
+                        loans.map(l => (
+                          <tr key={l.id} className="hover:bg-white/5">
+                            <td className="p-3 font-mono">#{l.id.substring(0, 8).toUpperCase()}</td>
+                            <td className="p-3 font-semibold">{l.accountNumber}</td> {/* associated account number */}
+                            <td className="p-3 font-semibold">{l.loanType}</td>
+                            <td className="p-3 font-bold">INR {l.principal.toLocaleString()}</td>
+                            <td className="p-3">{l.tenureMonths} Months</td>
+                            <td className="p-3 font-bold">INR {l.emiAmount.toLocaleString()}</td>
+                            <td className="p-3">
+                              <span className={`px-2 py-0.5 rounded-full font-bold uppercase text-[10px] ${
+                                l.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400' :
+                                l.status === 'PENDING' ? 'bg-amber-500/10 text-amber-400' :
+                                l.status === 'CLOSED' ? 'bg-gray-500/10 text-gray-400' :
+                                'bg-rose-500/10 text-rose-400'
+                              }`}>{l.status}</span>
+                            </td>
+                            <td className="p-3 text-right">
+                              {l.status === 'PENDING' ? (
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    onClick={() => handleApproveLoan(l.id)}
+                                    disabled={processing === l.id}
+                                    className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] transition-colors cursor-pointer"
+                                  >
+                                    {processing === l.id ? '...' : 'Approve'}
+                                  </button>
+                                  <button
+                                    onClick={() => handleRejectLoan(l.id)}
+                                    disabled={processing === l.id}
+                                    className="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10px] transition-colors cursor-pointer"
+                                  >
+                                    {processing === l.id ? '...' : 'Reject'}
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="text-gray-500">-</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>

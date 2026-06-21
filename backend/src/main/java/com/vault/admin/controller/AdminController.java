@@ -8,8 +8,11 @@ import com.vault.account.service.AccountService;
 import com.vault.auth.entity.User;
 import com.vault.auth.repository.UserRepository;
 import com.vault.loan.dto.LoanResponse;
+import com.vault.loan.dto.UpdateInterestRateRequest;
 import com.vault.loan.entity.Loan;
+import com.vault.loan.entity.LoanInterestRate;
 import com.vault.loan.service.LoanService;
+import jakarta.validation.Valid;
 import com.vault.transaction.dto.TransactionResponse;
 import com.vault.transaction.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -49,26 +52,35 @@ public class AdminController {
         return ResponseEntity.ok(users);
     }
 
-    @PutMapping("/accounts/{id}/freeze")
+    @PutMapping("/accounts/{identifier}/freeze")
     @Transactional
-    public ResponseEntity<AccountResponse> freezeAccount(@PathVariable UUID id) {
-        Account account = accountRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+    public ResponseEntity<AccountResponse> freezeAccount(@PathVariable String identifier) {
+        Account account = findAccountByIdentifier(identifier);
         account.setStatus(AccountStatus.FROZEN);
         Account saved = accountRepository.save(account);
-        accountService.invalidateBalanceCache(id);
+        accountService.invalidateBalanceCache(saved.getId());
         return ResponseEntity.ok(AccountResponse.fromEntity(saved));
     }
 
-    @PutMapping("/accounts/{id}/unfreeze")
+    @PutMapping("/accounts/{identifier}/unfreeze")
     @Transactional
-    public ResponseEntity<AccountResponse> unfreezeAccount(@PathVariable UUID id) {
-        Account account = accountRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+    public ResponseEntity<AccountResponse> unfreezeAccount(@PathVariable String identifier) {
+        Account account = findAccountByIdentifier(identifier);
         account.setStatus(AccountStatus.ACTIVE);
         Account saved = accountRepository.save(account);
-        accountService.invalidateBalanceCache(id);
+        accountService.invalidateBalanceCache(saved.getId());
         return ResponseEntity.ok(AccountResponse.fromEntity(saved));
+    }
+
+    private Account findAccountByIdentifier(String identifier) {
+        try {
+            UUID id = UUID.fromString(identifier);
+            return accountRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Account not found with ID: " + identifier));
+        } catch (IllegalArgumentException e) {
+            return accountRepository.findByAccountNumber(identifier)
+                    .orElseThrow(() -> new IllegalArgumentException("Account not found with Account Number: " + identifier));
+        }
     }
 
     @GetMapping("/transactions")
@@ -123,5 +135,11 @@ public class AdminController {
         stats.put("dailyTransactionVolume", todayVolume);
 
         return ResponseEntity.ok(stats);
+    }
+
+    @PutMapping("/loans/interest-rates")
+    public ResponseEntity<LoanInterestRate> updateInterestRate(@Valid @RequestBody UpdateInterestRateRequest request) {
+        LoanInterestRate updated = loanService.updateInterestRate(request.getLoanType(), request.getInterestRate());
+        return ResponseEntity.ok(updated);
     }
 }

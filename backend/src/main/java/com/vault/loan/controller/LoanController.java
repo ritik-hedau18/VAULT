@@ -6,6 +6,7 @@ import com.vault.loan.dto.LoanApplicationRequest;
 import com.vault.loan.dto.LoanRepaymentRequest;
 import com.vault.loan.dto.LoanResponse;
 import com.vault.loan.entity.Loan;
+import com.vault.loan.entity.LoanInterestRate;
 import com.vault.loan.service.LoanService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,11 @@ public class LoanController {
             @Valid @RequestBody LoanApplicationRequest request) {
         Loan loan = loanService.applyForLoan(user, request);
         return new ResponseEntity<>(LoanResponse.fromEntity(loan), HttpStatus.CREATED);
+    }
+
+    @GetMapping("/interest-rates")
+    public ResponseEntity<List<LoanInterestRate>> getInterestRates() {
+        return ResponseEntity.ok(loanService.getInterestRates());
     }
 
     @GetMapping("/my")

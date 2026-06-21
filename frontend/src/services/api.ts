@@ -180,6 +180,7 @@ export const api = {
     repay: (loanId: string, amount: number, transactionPin: string) => 
       apiClient.post<Loan>(`/loans/${loanId}/repay`, { amount, transactionPin }),
     getSchedule: (loanId: string) => apiClient.get<EmiScheduleItem[]>(`/loans/${loanId}/emi-schedule`),
+    getInterestRates: () => apiClient.get<{ loanType: string; interestRate: number }[]>('/loans/interest-rates'),
   },
 
   // Admin Module
@@ -192,5 +193,7 @@ export const api = {
     rejectLoan: (id: string) => apiClient.post<Loan>(`/admin/loans/${id}/reject`),
     getLoans: () => apiClient.get<Loan[]>('/admin/loans'),
     getStats: () => apiClient.get<DashboardStats>('/admin/dashboard/stats'),
+    updateInterestRate: (data: { loanType: string; interestRate: number }) => 
+      apiClient.put<{ loanType: string; interestRate: number }>('/admin/loans/interest-rates', data),
   }
 };

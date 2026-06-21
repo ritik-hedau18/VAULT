@@ -27,8 +27,14 @@ export const Loans: React.FC<LoansProps> = ({ user }) => {
   const [accId, setAccId] = useState('');
   const [loanType, setLoanType] = useState<LoanType>('PERSONAL');
   const [principal, setPrincipal] = useState('100000');
-  const [interestRate, setInterestRate] = useState('8.5');
+  const [interestRate, setInterestRate] = useState('12.5');
   const [tenure, setTenure] = useState('24');
+
+  const [loanRates, setLoanRates] = useState<Record<string, string>>({
+    PERSONAL: '12.5',
+    HOME: '8.5',
+    CAR: '9.5',
+  });
   
   // Repay Form State
   const [repayAmount, setRepayAmount] = useState('');
@@ -40,7 +46,24 @@ export const Loans: React.FC<LoansProps> = ({ user }) => {
   useEffect(() => {
     fetchLoans();
     fetchAccounts();
+    fetchInterestRates();
   }, []);
+
+  const fetchInterestRates = async () => {
+    try {
+      const res = await api.loans.getInterestRates();
+      const ratesMap: Record<string, string> = {};
+      res.data.forEach(item => {
+        ratesMap[item.loanType] = item.interestRate.toString();
+      });
+      setLoanRates(ratesMap);
+      if (ratesMap[loanType]) {
+        setInterestRate(ratesMap[loanType]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch interest rates:', err);
+    }
+  };
 
   const fetchLoans = async () => {
     setLoading(true);
@@ -285,7 +308,11 @@ export const Loans: React.FC<LoansProps> = ({ user }) => {
                   <select 
                     className="w-full px-3 py-2 rounded-lg glass-input text-sm"
                     value={loanType}
-                    onChange={(e) => setLoanType(e.target.value as LoanType)}
+                    onChange={(e) => {
+                      const selectedType = e.target.value;
+                      setLoanType(selectedType as LoanType);
+                      setInterestRate(loanRates[selectedType] || '8.5');
+                    }}
                   >
                     <option value="PERSONAL">Personal Loan</option>
                     <option value="HOME">Home Loan</option>
@@ -312,11 +339,9 @@ export const Loans: React.FC<LoansProps> = ({ user }) => {
                   <input 
                     type="number" 
                     required
-                    step="0.1"
-                    min="1"
-                    className="w-full px-3 py-2 rounded-lg glass-input text-sm"
+                    readOnly
+                    className="w-full px-3 py-2 rounded-lg glass-input text-sm bg-white/5 opacity-75 cursor-not-allowed"
                     value={interestRate}
-                    onChange={(e) => setInterestRate(e.target.value)}
                   />
                 </div>
 
