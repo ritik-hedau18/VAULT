@@ -5,7 +5,7 @@ server:
     key-store-password: vaultpassword
     key-store-type: PKCS12
     key-alias: vault
-    enabled: true
+    enabled: ${SERVER_SSL_ENABLED:true}
 
 spring:
   application:
