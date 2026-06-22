@@ -19,22 +19,6 @@
 
 ---
 
-## 📸 Screenshots
-
-| Login | Registration |
-|:---:|:---:|
-| ![Login](docs/screenshots/login.png) | ![Registration](docs/screenshots/register.png) |
-
-| Setup 2FA | Dashboard |
-|:---:|:---:|
-| ![Setup 2FA](docs/screenshots/setup_2fa.png) | ![Dashboard](docs/screenshots/dashboard.png) |
-
-| Fund Transfer |
-|:---:|
-| ![Fund Transfer](docs/screenshots/transfer.png) |
-
----
-
 ## 🏗️ Technical Architecture
 
 ```mermaid
