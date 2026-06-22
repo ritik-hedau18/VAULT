@@ -19,6 +19,22 @@
 
 ---
 
+## 📸 Screenshots
+
+| Login | Registration |
+|:---:|:---:|
+| ![Login](docs/screenshots/login.png) | ![Registration](docs/screenshots/register.png) |
+
+| Dashboard | Setup 2FA |
+|:---:|:---:|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Setup 2FA](docs/screenshots/setup_2fa.png) |
+
+| Fund Transfer | Lending Portal |
+|:---:|:---:|
+| ![Fund Transfer](docs/screenshots/transfer.png) | ![Lending Portal](docs/screenshots/loans.png) |
+
+---
+
 ## 🏗️ Technical Architecture
 
 ```mermaid
