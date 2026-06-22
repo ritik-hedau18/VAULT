@@ -12,30 +12,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableCaching
 public class VaultApplication {
     public static void main(String[] args) {
-        try {
-            SpringApplication.run(VaultApplication.class, args);
-        } catch (Throwable t) {
-            sendErrorToWebhook(t);
-            throw t;
-        }
-    }
-
-    private static void sendErrorToWebhook(Throwable t) {
-        try {
-            java.io.StringWriter sw = new java.io.StringWriter();
-            java.io.PrintWriter pw = new java.io.PrintWriter(sw);
-            t.printStackTrace(pw);
-            String stackTrace = sw.toString();
-
-            java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
-            java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
-                    .uri(java.net.URI.create("https://webhook.site/3f15fa3d-efdc-466b-8c4e-7c4241c3ff4a"))
-                    .header("Content-Type", "text/plain")
-                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(stackTrace))
-                    .build();
-            client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        SpringApplication.run(VaultApplication.class, args);
     }
 }
