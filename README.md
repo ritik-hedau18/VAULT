@@ -1,19 +1,22 @@
-# 🚀 VAULT — Verified Accounts & Unified Ledger Transactions
+# 🏦 VAULT (Verified Accounts & Unified Ledger Transactions) — Secure Enterprise Digital Banking & Ledger Clearance Engine
 
-> **Project Status**: 🛠️ *Under Active Development*
+> A high-performance, secure core retail banking ledger and transaction clearance system featuring distributed locking, multi-database auditing, automated interest/EMI scheduling, and multi-factor authentication.
 
-[![Java 17](https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
-[![Spring Boot 3.3.x](https://img.shields.io/badge/Spring_Boot-3.3.x-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white)](https://spring.io/projects/spring-boot)
-[![React 19](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-6-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
-[![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+![Java](https://img.shields.io/badge/Java-17-orange?style=flat-square&logo=openjdk)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.x-brightgreen?style=flat-square&logo=springboot)
+![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791?style=flat-square&logo=postgresql)
+![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=flat-square&logo=redis)
+![MongoDB](https://img.shields.io/badge/MongoDB-6-47A248?style=flat-square&logo=mongodb)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker)
 
-VAULT is a secure, production-style digital banking and ledger clearance engine. It manages core retail banking operations (account management, deposits/withdrawals, same-bank & inter-bank transfers), loan management with monthly EMI amortization schedule computations, automatic daily interest credits, and admin oversight. 
+---
 
-Built with **Java Spring Boot**, **Redis distributed locking**, **MongoDB audits**, **AES-256-GCM database field encryption**, and **Spring Security 6 with short-lived JWTs and 2FA TOTP (Google Authenticator)**.
+## 🔗 Live Deployments
+
+- **Frontend App**: Deployed on Vercel (Default Preview Domain)
+- **Backend API (Ping)**: [https://vault-backend-oujl.onrender.com/api/auth/ping](https://vault-backend-oujl.onrender.com/api/auth/ping) (Returns `"pong"` if active)
 
 ---
 
@@ -91,15 +94,49 @@ sequenceDiagram
 
 ---
 
-## 🔐 Security Features
+## ✨ Features
 
-1. **AES-256-GCM Encryption**: Critical user data like `account_number` and 2FA `totp_secret` are encrypted before writing to PostgreSQL using a static JPA Attribute Converter. The IV is randomly generated per encryption (12 bytes) and prepended to ciphertext.
-2. **Distributed Locks**: To prevent concurrent overdrafts and double-spend race conditions, a Redis lock (`transfer_lock:{accountId}`) is held during transfer pipelines.
-3. **Deadlock Prevention**: Database write locks (`PESSIMISTIC_WRITE`) are acquired in sorted order based on UUID strings.
-4. **Idempotency Shield**: All transfers, deposits, and withdrawals require an `idempotency-key` header. Results are cached in Redis for 24 hours.
-5. **Account Lockout**: Failed login attempts trigger an incrementing counter in Redis (`login_attempts:{email}`). 5 consecutive failures lock the account for 30 minutes.
-6. **2FA Setup Wizard**: 2FA secrets are cached temporarily in Redis (`otp:{userId}`) during the setup phase. The feature is only enabled in PostgreSQL once the user successfully verifies a code.
-7. **Stateless JWT Security**: Spring Security 6 handles access tokens (15-min TTL) and rotated refresh tokens (7-day TTL). Revoked tokens are blacklisted in Redis.
+- 🔒 **High-Security Auth & 2FA** — Spring Security 6 with stateless JWT access tokens, rotated refresh tokens, and Google Authenticator TOTP 2FA setup wizard.
+- 🔄 **Fund Transfer Ledger Engine** — Safe, high-concurrency fund transfers using Pessimistic Database Locking (`PESSIMISTIC_WRITE`) and ordered locks to prevent deadlocks.
+- 🛡️ **Distributed Lock Management** — Prevent double-spending and overdraft race conditions using Redis-based distributed locks.
+- ⚡ **Idempotency Shielding** — All state-changing transactions are validated against an API Idempotency Key cached in Redis for 24 hours.
+- 📈 **Loan EMI Amortization** — Automated amortized monthly schedule calculators for active personal/retail loans.
+- ⏰ **Automated Quartz Schedulers** — Daily interest accrual credits, monthly statement generation, fixed deposit maturity warnings, and loan EMI notifications.
+- 📑 **Secure Audit & Statement Logging** — Relational transaction history stored in PostgreSQL, with detailed, append-only logs and statement archives in MongoDB.
+- 🔏 **At-Rest Field Encryption** — AES-256-GCM database field encryption for sensitive data (e.g., account numbers, TOTP secrets) using custom JPA attribute converters.
+- 🚫 **Account Lockout Policy** — 5 consecutive failed login attempts trigger an automatic 30-minute lockout enforced in Redis.
+
+---
+
+## 🛠️ Tech Stack
+
+### Backend
+
+| Technology | Purpose |
+|---|---|
+| Java 17 | Core language |
+| Spring Boot 3.3.x | Backend framework |
+| Spring Security 6 + JWT | Stateless auth, access & refresh token rotation |
+| Google Authenticator (TOTP) | Two-factor authentication (2FA) |
+| Spring Data JPA + Hibernate | Relational mapping & database interactions |
+| PostgreSQL | Primary relational database (ledger, users, loans) |
+| MongoDB | Document database (audit logs, statement archives) |
+| Redis | Cache, distributed locks, idempotency cache, blacklists |
+| Quartz Scheduler | Enterprise scheduling for interest, statements, and alerts |
+| Lombok | Boilerplate reduction |
+| Docker + Docker Compose | Infrastructure orchestration |
+
+### Frontend
+
+| Technology | Purpose |
+|---|---|
+| React 19 | UI framework |
+| TypeScript 5.x | Type-safe frontend development |
+| Vite 5/6 | Build tool and dev server |
+| Tailwind CSS | Utility-first styling |
+| shadcn/ui + Radix UI | Premium visual UI component primitives |
+| React Router DOM | Client-side routing |
+| Axios | API calls with JWT request/response interceptors |
 
 ---
 
@@ -111,114 +148,167 @@ sequenceDiagram
 | `MonthlyStatementJob` | `0 0 1 1 * ?` | 1:00 AM on 1st of Month | Aggregates credits/debits, calculates opening balances, writes statements to MongoDB, and emails alerts. |
 | `FDMaturityAlertJob` | `0 0 9 * * ?` | 9:00 AM Daily | Sends maturity warning emails for Fixed Deposits maturing in exactly 7 days. |
 | `LoanEMIReminderJob` | `0 0 8 * * ?` | 8:00 AM Daily | Sends EMI installment reminders 3 days before payment due dates. |
-| `OTPCleanupJob` | `0 */5 * * * ?` | Every 5 Minutes | Monitores expired OTP session keyspace in Redis. |
+| `OTPCleanupJob` | `0 */5 * * * ?` | Every 5 Minutes | Monitors expired OTP session keyspace in Redis. |
 | `InterBankTransferJob` | `0 */30 * * * ?` | Every 30 Minutes | Simulates clearing house clearance for pending interbank transfers. |
-
----
-
-## 📁 Environment Variables
-
-Create a `.env` file in the root directory before running the containers:
-
-| Variable Name | Example Value | Description |
-|---|---|---|
-| `DB_URL` | `jdbc:postgresql://localhost:5432/vaultdb` | Primary PostgreSQL JDBC URL |
-| `DB_USER` | `vaultuser` | PostgreSQL Database Username |
-| `DB_PASSWORD` | `vaultpassword` | PostgreSQL Database Password |
-| `MONGO_URI` | `mongodb://localhost:27017/vault_audit` | MongoDB connection URI |
-| `REDIS_HOST` | `localhost` | Redis server hostname |
-| `REDIS_PORT` | `6379` | Redis server port number |
-| `JWT_SECRET` | `404E635266556...6D5367566` | HMAC-SHA256 Secret (At least 32 bytes) |
-| `AES_SECRET_KEY` | `SuperSecretVaultKeyEncryptAtRest12` | AES-256 cipher secret key (16, 24, or 32 characters) |
-| `TWILIO_ACCOUNT_SID` | `AC00000000000000000000000` | Twilio Account SID (use mock values for fallback) |
-| `TWILIO_AUTH_TOKEN` | `your_twilio_token` | Twilio API Auth Token |
-| `TWILIO_PHONE_NUMBER` | `+15017122661` | Configured Twilio SMS phone number |
-| `MAIL_HOST` | `smtp.gmail.com` | Gmail SMTP Server address |
-| `MAIL_USERNAME` | `vault.banking@gmail.com` | Sender Gmail username |
-| `MAIL_PASSWORD` | `your_app_specific_password` | App-specific Google account password |
 
 ---
 
 ## 🚀 Local Development Setup
 
-### Prerequisite Databases (Docker Compose)
-1. Run the database containers:
-   ```bash
-   docker-compose up -d
-   ```
+### Prerequisites
 
-### Backend Startup (Spring Boot)
-1. Import project into your IDE or navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
-2. Build the project and run the tests:
-   ```bash
-   mvn clean test
-   ```
-3. Run the application:
-   ```bash
-   mvn spring-boot:run
-   ```
-   *The Swagger API documentation will be available at:* `https://localhost:8080/swagger-ui.html`
-
-### Frontend Startup (React + Vite)
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
-2. Install npm dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
-   *The React panel will be available at:* `http://localhost:5173`
+- Java 17+
+- Node.js 18+
+- Docker + Docker Compose
 
 ---
 
-## 🌐 Selected API Examples
+### 1. Clone the repository
 
-### 1. Perform Fund Transfer
 ```bash
-curl -X POST https://localhost:8080/api/transactions/transfer \
-  -H "Authorization: Bearer <JWT_ACCESS_TOKEN>" \
-  -H "idempotency-key: a5436c84-9de2-4c28-98e3-ea62df7bc8e2" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "fromAccountId": "85ef0a59-b1d5-4ad9-a78b-d53bf540cc8c",
-    "toAccountNumber": "100088882222",
-    "amount": 2500.00,
-    "transactionPin": "1234",
-    "totpCode": "847291",
-    "interBank": false,
-    "description": "Invoice #4928"
-  }'
+git clone https://github.com/ritik-hedau18/VAULT.git
+cd VAULT
 ```
 
-### 2. Configure 2FA (Setup)
+### 2. Start infrastructure
+
 ```bash
-curl -X POST https://localhost:8080/api/auth/2fa/setup \
-  -H "Authorization: Bearer <JWT_ACCESS_TOKEN>"
+docker-compose up -d
 ```
 
-### 3. Apply for Retail Loan
+Starts PostgreSQL on `:5432`, Redis on `:6379`, and MongoDB on `:27017`.
+
+### 3. Configure environment variables
+
 ```bash
-curl -X POST https://localhost:8080/api/loans/apply \
-  -H "Authorization: Bearer <JWT_ACCESS_TOKEN>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "accountId": "85ef0a59-b1d5-4ad9-a78b-d53bf540cc8c",
-    "loanType": "CAR",
-    "principal": 350000.00,
-    "interestRate": 8.75,
-    "tenureMonths": 36
-  }'
+cp .env.example .env
 ```
+
+Fill in your `.env` or set these variables in your environment:
+
+```env
+DB_URL=jdbc:postgresql://localhost:5432/vaultdb
+DB_USER=vaultuser
+DB_PASSWORD=vaultpassword
+MONGO_URI=mongodb://localhost:27017/vault_audit
+REDIS_HOST=localhost
+REDIS_PORT=6379
+JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+AES_SECRET_KEY=SuperSecretVaultKeyEncryptAtRest12
+TWILIO_ACCOUNT_SID=mock_sid
+TWILIO_AUTH_TOKEN=mock_token
+TWILIO_PHONE_NUMBER=+15017122661
+MAIL_HOST=smtp.gmail.com
+MAIL_USERNAME=vault.banking@gmail.com
+MAIL_PASSWORD=mock_password
+```
+
+### 4. Run the backend
+
+```bash
+cd backend
+mvn spring-boot:run
+```
+
+Backend starts at `https://localhost:8080`.
+*Swagger API documentation:* `https://localhost:8080/swagger-ui.html`
+
+### 5. Run the frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend starts at `http://localhost:5173`.
 
 ---
 
-## 🔗 Fintech Ecosystem Context
-VAULT is designed to represent the core transactional banking node within our digital finance ecosystem. It acts as the unified ledger of record for retail accounts, which integrates natively with upstream clearing nodes (like **TRACE** - Transaction Routing & Auto-Clearing Engine) to orchestrate multi-entity payments, audit verification trails, and bulk ledger settlements.
+## 🔌 API Reference
+
+### Auth Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|---|---|---|---|
+| POST | `/api/auth/register` | Register a new user | ❌ |
+| POST | `/api/auth/login` | Login, returns JWT tokens | ❌ |
+| POST | `/api/auth/2fa/setup` | Generate TOTP secret & QR code | ✅ |
+| POST | `/api/auth/2fa/verify` | Verify OTP code and enable 2FA | ✅ |
+| POST | `/api/auth/refresh` | Refresh access token | ❌ |
+| POST | `/api/auth/logout` | Revoke tokens and logout | ✅ |
+| GET | `/api/auth/ping` | Health check (ping-pong) | ❌ |
+
+### Account Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|---|---|---|---|
+| GET | `/api/accounts/me` | Fetch active user accounts | ✅ |
+| POST | `/api/accounts/create` | Open a new savings/checking account | ✅ |
+
+### Transaction Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|---|---|---|---|
+| POST | `/api/transactions/deposit` | Deposit funds | ✅ |
+| POST | `/api/transactions/withdraw` | Withdraw funds | ✅ |
+| POST | `/api/transactions/transfer` | Fund transfer (same-bank/interbank) | ✅ |
+| GET | `/api/transactions/history` | List ledger history with filters | ✅ |
+
+### Loan Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|---|---|---|---|
+| POST | `/api/loans/apply` | Apply for a retail loan | ✅ |
+| GET | `/api/loans/my-loans` | Fetch user's active loans & schedules | ✅ |
+| POST | `/api/loans/repay/{id}` | Repay a loan installment | ✅ |
+
+---
+
+## 🔒 Security & Reliability Design
+
+- **At-Rest Field Encryption**: Critical user data (`account_number`, 2FA `totp_secret`) are encrypted prior to database persistence in PostgreSQL using AES-256-GCM.
+- **Race Condition Prevention**: Concurrency conflicts during balance edits are resolved via a combination of Redis-based distributed locking (`transfer_lock:{accountId}`) and DB pessimistic write locks (`PESSIMISTIC_WRITE`).
+- **Deadlock Mitigation**: Relational DB locks are always acquired in sorted order based on UUID strings, preventing classic deadlock situations under high transactional load.
+- **Idempotency Shield**: Every transfer, deposit, or withdrawal pipeline requires a client-provided `idempotency-key` header. Results are cached in Redis for 24 hours to prevent duplicate execution.
+- **Account Lockout**: 5 failed login attempts lock the user out for 30 minutes, managed in memory by Redis.
+
+---
+
+## 🗄️ Database Schemas
+
+| Table/Collection | Purpose | Database |
+|---|---|---|
+| `users` | User credentials, roles, and status | PostgreSQL |
+| `accounts` | Bank account numbers, balance, type, ownership | PostgreSQL |
+| `transactions` | Relational ledger entries (idempotency reference, amounts) | PostgreSQL |
+| `loans` | Active loans, principal, interest, tenure, balance | PostgreSQL |
+| `loan_installments` | Amortization schedule dates, principal/interest split | PostgreSQL |
+| `audit_logs` | Detailed append-only security logs & transaction trails | MongoDB |
+| `statements` | Monthly generated statement snapshots | MongoDB |
+
+---
+
+## 👤 Author
+
+**Ritik Hedau**
+Java Full Stack Developer | Spring Boot | Spring AI | React
+📍 India
+
+[![GitHub](https://img.shields.io/badge/GitHub-ritik--hedau18-black?style=flat-square&logo=github)](https://github.com/ritik-hedau18)
+
+---
+
+## 🔗 Related Projects
+
+| Project | Description |
+|---|---|
+| [NEXUS](https://github.com/ritik-hedau18/NEXUS) | AI-powered enterprise document workspace platform |
+| [TRACE](https://github.com/ritik-hedau18/TRACE-Transaction-Risk-and-Anomaly-Classification-Engine) | Real-time fraud detection system using Spring Boot microservices + Kafka |
+| [SRIJAN](https://github.com/ritik-hedau18/SRIJAN) | AI-powered Spring Boot code generator using Groq LLaMA + Spring AI |
+
+---
+
+## 📄 License
+
+This project is open source and available under the [MIT License](LICENSE).

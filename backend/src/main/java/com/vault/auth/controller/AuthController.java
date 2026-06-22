@@ -19,6 +19,11 @@ public class AuthController {
 
     private final AuthService authService;
 
+    @GetMapping("/ping")
+    public ResponseEntity<String> ping() {
+        return ResponseEntity.ok("pong");
+    }
+
     @PostMapping("/register")
     public ResponseEntity<User> register(@Valid @RequestBody RegisterRequest request) {
         User user = authService.register(request);
