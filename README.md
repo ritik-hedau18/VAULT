@@ -15,8 +15,23 @@
 
 ## 🔗 Live Deployments
 
-- **Frontend App**: Deployed on Vercel (Default Preview Domain)
-- **Backend API (Ping)**: [https://vault-backend-oujl.onrender.com/api/auth/ping](https://vault-backend-oujl.onrender.com/api/auth/ping) (Returns `"pong"` if active)
+- **Frontend App (Live)**: [https://vaultbyritik.vercel.app/](https://vaultbyritik.vercel.app/)
+
+---
+
+## 📸 Screenshots
+
+| Login | Registration |
+|:---:|:---:|
+| ![Login](docs/screenshots/login.png) | ![Registration](docs/screenshots/register.png) |
+
+| Setup 2FA | Dashboard |
+|:---:|:---:|
+| ![Setup 2FA](docs/screenshots/setup_2fa.png) | ![Dashboard](docs/screenshots/dashboard.png) |
+
+| Fund Transfer |
+|:---:|
+| ![Fund Transfer](docs/screenshots/transfer.png) |
 
 ---
 
